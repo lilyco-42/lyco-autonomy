@@ -102,6 +102,14 @@ export default {
   const {pathname}=new URL(request.url);
   if(request.method==="GET" && pathname==="/health")
    return reply({service:"lyco-autonomy",status:"online",mode:"zero-cash-draft-planner",cron:"every 6h UTC",auto_publish:false});
+  // Deliberately public: contains ONLY original generated draft text, never accounts or credentials.
+  if(request.method==="GET" && pathname==="/feed") {
+   const item=await env.DB.prepare("SELECT created_at,title,script,tags,model FROM drafts WHERE status='ready' ORDER BY created_at DESC LIMIT 1").first();
+   if(!item) return reply({error:"feed_empty"},404);
+   return new Response(JSON.stringify({draft:item}),{
+    headers:{"content-type":"application/json; charset=utf-8","cache-control":"public, max-age=300"}
+   });
+  }
   if(!(await authorize(request,env))) return reply({error:"unauthorized"},401);
   if(request.method==="GET" && pathname==="/drafts") {
    const q=await env.DB.prepare("SELECT id,created_at,title,script,model,quality_score,status,tags FROM drafts ORDER BY created_at DESC LIMIT 30").all();

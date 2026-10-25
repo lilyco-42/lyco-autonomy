@@ -2,7 +2,7 @@
 
 Cloudflare Worker + D1. Cron every six hours UTC, at most four new script drafts daily. An authenticated admin endpoint may trigger runs and retrieve records.
 
-The public health endpoint is /health. Private endpoints /runs, /drafts, and POST /run are disabled until ADMIN_TOKEN is set as a Cloudflare Worker secret.
+Public /health and read-only /feed endpoints disclose service status and the latest original publishable draft only. Private endpoints /runs, /drafts, and POST /run require ADMIN_TOKEN; no credentials, private interactions, or account details are exposed by /feed.
 
 Optional OPENROUTER_API_KEY enables the explicitly zero-priced openrouter/free route. If absent or unavailable, the service generates a bounded original narrative from templates instead, without spending money. No browser cookies, bypass of subscription quotas, or paid fallback.
 

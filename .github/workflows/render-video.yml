@@ -11,7 +11,6 @@ jobs:
       contents: read
     env:
       LYCO_WORKER_URL: https://lyco-autonomy.m15178682641.workers.dev
-      LYCO_ADMIN_TOKEN: ${{ secrets.LYCO_ADMIN_TOKEN }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5

@@ -17,19 +17,15 @@ FONTS = [
 
 def get_draft():
     url = os.environ.get("LYCO_WORKER_URL", "").rstrip("/")
-    token = os.environ.get("LYCO_ADMIN_TOKEN", "")
-    if not url or not token:
-        raise RuntimeError("Missing LYCO_WORKER_URL or LYCO_ADMIN_TOKEN")
-    request = urllib.request.Request(url + "/drafts", headers={
-        "Authorization": "Bearer " + token,
-        "Accept": "application/json"
-    })
+    if not url:
+        raise RuntimeError("Missing LYCO_WORKER_URL")
+    request = urllib.request.Request(url + "/feed", headers={"Accept":"application/json"})
     with urllib.request.urlopen(request, timeout=20) as response:
         body = json.load(response)
-    drafts = body.get("drafts", [])
-    if not drafts:
-        raise RuntimeError("No cloud drafts have been produced yet")
-    return drafts[0]
+    draft = body.get("draft")
+    if not draft:
+        raise RuntimeError("Cloud feed has no ready draft")
+    return draft
 
 def wrap_cjk(text, limit=23, lines=8):
     words = text.replace("\r", "").replace("\n", " ")
