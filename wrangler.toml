@@ -1,0 +1,15 @@
+name = "lyco-autonomy"
+main = "src/index.js"
+compatibility_date = "2026-10-25"
+workers_dev = true
+
+[triggers]
+crons = ["0 */6 * * *"]
+
+[vars]
+MAX_DRAFTS_PER_DAY = "4"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "lyco-autonomy-db"
+database_id = "1694483d-0944-40ed-ad73-a1c700bb5d68"

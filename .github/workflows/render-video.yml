@@ -1,0 +1,32 @@
+name: Render Lyco Video Draft
+on:
+  schedule:
+    - cron: '20 3 * * *'
+  workflow_dispatch:
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    env:
+      LYCO_WORKER_URL: https://lyco-autonomy.m15178682641.workers.dev
+      LYCO_ADMIN_TOKEN: ${{ secrets.LYCO_ADMIN_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install free video render dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq ffmpeg fonts-noto-cjk
+          python -m pip install --disable-pip-version-check Pillow==11.3.0
+      - name: Render newest cloud draft
+        run: python scripts/render.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: lyco-draft-video
+          path: output/*.mp4
+          if-no-files-found: error
+          retention-days: 7
