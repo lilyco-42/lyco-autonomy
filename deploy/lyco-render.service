@@ -1,0 +1,21 @@
+[Unit]
+Description=Lyco Autonomous Video Draft Renderer
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=lyco-render
+Group=lyco-render
+WorkingDirectory=/var/lib/lyco-autonomy-renderer
+Environment=LYCO_WORKER_URL=https://lyco-autonomy.m15178682641.workers.dev
+ExecStart=/usr/bin/python3 /opt/lyco-autonomy-renderer/render.py
+NoNewPrivileges=yes
+ProtectHome=yes
+ProtectSystem=strict
+ReadWritePaths=/var/lib/lyco-autonomy-renderer
+PrivateTmp=yes
+MemoryMax=650M
+CPUQuota=50%
+Nice=10
+TimeoutStartSec=360

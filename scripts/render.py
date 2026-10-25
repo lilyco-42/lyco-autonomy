@@ -1,4 +1,5 @@
 """Render a small original silent draft from the cloud planner. No auto publishing."""
+import hashlib
 import json
 import os
 import pathlib
@@ -38,6 +39,11 @@ def main():
     draft = get_draft()
     title = draft["title"]
     script = draft["script"]
+    digest = hashlib.sha256((draft.get("created_at", "") + title + script).encode("utf-8")).hexdigest()[:12]
+    video = OUTPUT / ("lyco-" + digest + ".mp4")
+    if video.exists():
+        print(json.dumps({"title": title, "video": str(video), "state":"already_rendered"}, ensure_ascii=False))
+        return
     font_path = next((x for x in FONTS if pathlib.Path(x).exists()), None)
     if not font_path:
         raise RuntimeError("CJK font is not installed on runner")
@@ -66,7 +72,6 @@ def main():
         d.text((130, 615), "虚构原创 AI 角色 · 内容由自动化系统生成", font=small_font, fill="#91919B")
         canvas.save(OUTPUT / f"{i:02d}.png")
 
-    video = OUTPUT / "lyco-auto-draft.mp4"
     subprocess.run([
         "ffmpeg", "-hide_banner", "-loglevel", "error", "-y",
         "-framerate", "1/7", "-i", str(OUTPUT / "%02d.png"),

@@ -1,0 +1,11 @@
+[Unit]
+Description=Run Lyco video renderer after Cloudflare planning Cron
+
+[Timer]
+OnCalendar=*-*-* 00,06,12,18:30:00 UTC
+Persistent=true
+RandomizedDelaySec=120
+Unit=lyco-render.service
+
+[Install]
+WantedBy=timers.target
