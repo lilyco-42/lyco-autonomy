@@ -19,7 +19,7 @@ def get_draft():
     url = os.environ.get("LYCO_WORKER_URL", "").rstrip("/")
     if not url:
         raise RuntimeError("Missing LYCO_WORKER_URL")
-    request = urllib.request.Request(url + "/feed", headers={"Accept":"application/json"})
+    request = urllib.request.Request(url + "/feed", headers={"Accept":"application/json", "User-Agent":"Mozilla/5.0 (compatible; LycoRenderer/1.0)"})
     with urllib.request.urlopen(request, timeout=20) as response:
         body = json.load(response)
     draft = body.get("draft")

@@ -1,6 +1,6 @@
 name = "lyco-autonomy"
 main = "src/index.js"
-compatibility_date = "2026-10-25"
+compatibility_date = "2026-09-24"
 workers_dev = true
 
 [triggers]
@@ -8,6 +8,9 @@ crons = ["0 */6 * * *"]
 
 [vars]
 MAX_DRAFTS_PER_DAY = "4"
+
+[ai]
+binding = "AI"
 
 [[d1_databases]]
 binding = "DB"

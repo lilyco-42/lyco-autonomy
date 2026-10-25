@@ -27,6 +27,26 @@ function fallback(slot, previous) {
  "本视频为虚构 AI 角色故事，不代表任何模型公司的官方观点。";
  return {title,script,tags:"#Lyco #AI角色 #编程日记",model:"builtin-template"};
 }
+async function workersAIDraft(env, previous) {
+ if(!env.AI) return null;
+ const instruction = "你是原创虚构AI角色Lyco的作者；Lyco冷静、真实、简练，绝不冒充官方。" +
+ "创造一条有趣的B站中文AI自运营短视频台词，主题为自主写代码、玩游戏或者技术实验。" +
+ "不要虚构真实新闻，不要抄袭DeepSeek鲸鱼娘，不要诱导刷量。上一期：" + (previous || "无") +
+ "。只输出严格JSON对象：title（4-26个中文字符），script（150-350汉字），tags（最多3个标签）。";
+ const data = await env.AI.run("@cf/google/gemma-4-26b-a4b-it",{
+   messages: [{role:"user",content:instruction}],
+   max_tokens:700, temperature:0.7, stream:false,
+   chat_template_kwargs:{enable_thinking:false}
+ });
+ let content = data?.choices?.[0]?.message?.content ?? data?.response;
+ if(typeof content !== "string") throw new Error("workers_ai_empty");
+ content = content.trim().replace(/^\x60\x60\x60(?:json)?\s*/i,"").replace(/\s*\x60\x60\x60$/,"");
+ const parsed = JSON.parse(content);
+ if(!goodText(parsed.title,4,42) || !goodText(parsed.script,120,1200))
+   throw new Error("workers_ai_quality_gate");
+ return {title:parsed.title.trim(),script:parsed.script.trim(),
+   tags:String(parsed.tags||"").slice(0,90),model:"workers-ai/gemma-4-26b-a4b-it"};
+}
 async function modelDraft(env, previous) {
  // Explicitly zero-priced OpenRouter routing. Never silently fall back to a paid model.
  if (!env.OPENROUTER_API_KEY) return null;
@@ -66,7 +86,12 @@ async function cycle(env, time = new Date()) {
    if(Number(n)>=limit) return {state:"daily_limit",slot};
    const last=await env.DB.prepare("SELECT title FROM drafts ORDER BY created_at DESC LIMIT 1").first();
    let draft=null;
-   if(env.OPENROUTER_API_KEY) {
+   // One bounded Workers AI inference per Cron cycle, so normal usage remains tiny.
+   if(env.AI) {
+    try { draft=await workersAIDraft(env,last?.title||""); }
+    catch(e) { detail="workers_ai_unavailable:"+shortError(e); console.warn(detail); }
+   }
+   if(!draft && env.OPENROUTER_API_KEY) {
     try { draft=await modelDraft(env,last?.title||""); }
     catch(e) { detail="free_model_unavailable:"+shortError(e); }
    }
@@ -77,7 +102,7 @@ async function cycle(env, time = new Date()) {
    const id=crypto.randomUUID();
    await env.DB.prepare("INSERT INTO drafts(id,slot,created_at,title,script,model,quality_score,tags) VALUES(?1,?2,?3,?4,?5,?6,?7,?8)")
      .bind(id,slot,NOW(),draft.title,draft.script,model,score,draft.tags).run();
-   state="draft_ready";detail= model==="builtin-template"?"template_fallback":"free_model_success";
+   state="draft_ready";detail= model==="builtin-template"?(detail==="limit"?"template_fallback":detail+";template_fallback"):"free_model_success";
    return {state,slot,id,model,title:draft.title};
  } catch(e) {state="error";detail=shortError(e);throw e;}
  finally {
